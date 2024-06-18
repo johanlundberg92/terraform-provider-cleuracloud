@@ -1,14 +1,18 @@
 terraform {
   required_providers {
-    cleura = {
+    cleuracloud = {
       source  = "hashicorp.com/johanlundberg/cleura"
-      version = "0.1.0"
+      # version = "0.1.0"
     }
+    # cleuracloud = {
+    #   source = "johanlundberg92/cleuracloud"
+    #   version = "0.1.3"
+    # }
   }
 }
 
 
-resource "cleura_openstack_user" "testuser" {
+resource "cleuracloud_openstack_user" "testuser" {
   name      = "testuserone"
   domain_id = "f6ba827d60094aae8068161719d7172c"
   enabled   = true

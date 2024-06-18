@@ -43,7 +43,7 @@ type cleuraProvider struct {
 
 // Metadata returns the provider type name.
 func (p *cleuraProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "cleura"
+	resp.TypeName = "cleuracloud"
 	resp.Version = p.version
 }
 
@@ -180,20 +180,22 @@ func (p *cleuraProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 			"username": schema.StringAttribute{
 				Description: "Username for Cleura API. May also be provided via CLEURA_USER environment variable.",
 				Optional:    true,
+				Sensitive:   false,
 			},
 			"password": schema.StringAttribute{
 				Description: "Password for Cleura API. May also be provided via CLEURA_PW environment variable.",
 				Optional:    true,
+				Sensitive:   true,
 			},
 			"api_url": schema.StringAttribute{
 				Description: "Url for Cleura API. May also be provided via CLEURA_URL environment variable.",
 				Optional:    true,
-				Sensitive:   true,
+				Sensitive:   false,
 			},
 			"domain_id": schema.StringAttribute{
 				Description: "DomainId for Cleura API. May also be provided via CLEURA_DOMAIN_ID environment variable.",
 				Optional:    true,
-				Sensitive:   true,
+				Sensitive:   false,
 			},
 		},
 	}
