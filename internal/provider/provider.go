@@ -205,6 +205,7 @@ func (p *cleuraProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 func (p *cleuraProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewOpenstackUserDataSource,
+		NewCCPUserDataSource,
 	}
 }
 
