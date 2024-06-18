@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     cleuracloud = {
-      source  = "hashicorp.com/johanlundberg/cleura"
+      source  = "johanlundberg92/cleuracloud"
       # version = "0.1.0"
     }
     # cleuracloud = {
@@ -11,6 +11,9 @@ terraform {
   }
 }
 
+provider "cleuracloud" {
+  
+}
 
 resource "cleuracloud_openstack_user" "testuser" {
   name      = "testuserone"
@@ -20,7 +23,7 @@ resource "cleuracloud_openstack_user" "testuser" {
     {
       id = "5068f750207a4b1b81e91cb90cefd293"
       roles = [
-        "member","swiftoperator"
+        "swiftoperator","member"
       ]
     }
   ]

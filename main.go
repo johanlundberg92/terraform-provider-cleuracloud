@@ -7,7 +7,7 @@ import (
 	"context"
 	"flag"
 	"log"
-	"terraform-provider-cleura/internal/provider"
+	"terraform-provider-cleuracloud/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )

@@ -1,4 +1,4 @@
-module terraform-provider-cleura
+module terraform-provider-cleuracloud
 
 go 1.22
 

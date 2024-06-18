@@ -73,7 +73,7 @@ func (c *cleuraUserResource) Schema(ctx context.Context, req resource.SchemaRequ
 						// "domain_id": schema.StringAttribute{
 						// 	Computed: true,
 						// },
-						"roles": schema.ListAttribute{
+						"roles": schema.SetAttribute{
 							Required:    true,
 							ElementType: tftype.StringType,
 							// NestedObject: schema.NestedAttributeObject{
