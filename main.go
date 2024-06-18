@@ -24,6 +24,7 @@ import (
 
 var (
 	version string = "dev"
+	address string = "registry.terraform.io/johanlundberg92/cleuracloud"
 )
 
 func main() {
@@ -33,7 +34,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "hashicorp.com/johanlundberg/cleura",
+		Address: address,
 		Debug:   debug,
 	}
 
