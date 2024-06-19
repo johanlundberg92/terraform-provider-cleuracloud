@@ -10,6 +10,95 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// ---------- Types
+type ccpUserDataSourceModel struct {
+	Id           types.String   `tfsdk:"id"`
+	Name         types.String   `tfsdk:"name"`
+	Privileges   *ccpPrivileges `tfsdk:"privileges"`
+	Admin        types.Bool     `tfsdk:"admin"`
+	FirstName    types.String   `tfsdk:"first_name"`
+	LastName     types.String   `tfsdk:"last_name"`
+	Email        types.String   `tfsdk:"email"`
+	PendingEmail types.String   `tfsdk:"pending_email"`
+	Language     types.String   `tfsdk:"language"`
+	// TwoFactorLogin interface{}    `tfsdk:"two_factor_login"`
+	// IPRestrictions interface{}    `tfsdk:"ip_restrictions"`
+	Currency       *ccpCurrency `tfsdk:"currency"`
+	AuthProviderId types.String `tfsdk:"auth_provider_id"`
+}
+
+type ccpCurrency struct {
+	Id   types.String `tfsdk:"id"`
+	Code types.String `tfsdk:"code"`
+	Name types.String `tfsdk:"name"`
+}
+
+// Privileges represents the nested privileges object.
+type ccpPrivileges struct {
+	Users     ccpUsersPrivilege      `tfsdk:"users"`
+	OpenStack ccpOpenstackPrivileges `tfsdk:"openstack"`
+}
+
+// InvoicePrivileges represents the invoice privileges.
+type ccpUsersPrivilege struct {
+	Type types.String `tfsdk:"type"`
+	Meta types.String `tfsdk:"meta"`
+}
+
+type ccpOpenstackPrivileges struct {
+	Type              types.String           `tfsdk:"type"`
+	Meta              types.String           `tfsdk:"meta"`
+	ProjectPrivileges []ccpProjectPrivileges `tfsdk:"project_privileges"`
+}
+
+type ccpProjectPrivileges struct {
+	ProjectId types.String `tfsdk:"project_id"`
+	DomainId  types.String `tfsdk:"domain_id"`
+	Type      types.String `tfsdk:"type"`
+}
+
+// ------------------------- JSON
+type ccpUserJson struct {
+	Id             string            `json:"id"`
+	Name           string            `json:"name"`
+	Privileges     ccpPrivilegesJson `json:"privileges"`
+	Admin          bool              `json:"admin"`
+	FirstName      string            `json:"firstname"`
+	LastName       string            `json:"lastname"`
+	Email          string            `json:"email"`
+	PendingEmail   string            `json:"pending_email,omitempty"`
+	Language       string            `json:"language,omitempty"`
+	TwoFactorLogin []string          `json:"twofactorLogin,omitempty"`  // Use interface{} for nullable fields
+	IPRestrictions []string          `json:"ip_restrictions,omitempty"` // Assuming IP restrictions are strings; adjust as needed
+	Currency       ccpCurrencyJson   `json:"currency,omitempty"`
+	AuthProviderId string            `json:"auth_provider_id"`
+}
+type ccpCurrencyJson struct {
+	Id   string `json:"id"`
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+type ccpPrivilegesJson struct {
+	Users     ccpUsersPrivilegeJson      `json:"users"`
+	OpenStack ccpOpenstackPrivilegesJson `json:"openstack"`
+}
+type ccpUsersPrivilegeJson struct {
+	Type string `json:"type"`
+	Meta string `json:"meta"`
+}
+type ccpOpenstackPrivilegesJson struct {
+	Type              string                     `json:"type"`
+	Meta              string                     `json:"meta"`
+	ProjectPrivileges []ccpProjectPrivilegesJson `json:"project_privileges,omitempty"`
+}
+type ccpProjectPrivilegesJson struct {
+	ProjectId string `json:"project_id"`
+	DomainId  string `json:"domain_id"`
+	Type      string `json:"type"`
+}
+
+// --------
+
 type ccpUserDataSource struct {
 	Client *CleuraClient
 }
@@ -104,10 +193,6 @@ func (c *ccpUserDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 					"name": types.StringType,
 				},
 			},
-			// "ip_restrictions": schema.SetAttribute{
-			// 	ElementType: tftype.StringType,
-			// 	Computed:    true,
-			// },
 			"privileges": schema.SingleNestedAttribute{
 				Computed: true,
 				Attributes: map[string]schema.Attribute{
@@ -130,6 +215,22 @@ func (c *ccpUserDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 							},
 							"meta": schema.StringAttribute{
 								Computed: true,
+							},
+							"project_privileges": schema.ListNestedAttribute{
+								Computed: true,
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"project_id": schema.StringAttribute{
+											Computed: true,
+										},
+										"domain_id": schema.StringAttribute{
+											Computed: true,
+										},
+										"type": schema.StringAttribute{
+											Computed: true,
+										},
+									},
+								},
 							},
 						},
 					},

@@ -420,11 +420,8 @@ func (c *CleuraClient) GetCCPUser(ctx context.Context, name string) (ccpUserData
 		return ccpUserDataSourceModel{}, err
 	}
 	response := ccpUserDataSourceModel{
-		// Id:   types.StringValue(ccpUser.Id),
-		// Name: types.StringValue(ccpUser.Name),
-		Id:   types.StringValue(ccpUser.Id),
-		Name: types.StringValue(ccpUser.Name),
-		// Privileges:     ccpUser.Privileges, // Assuming Privileges is directly compatible
+		Id:             types.StringValue(ccpUser.Id),
+		Name:           types.StringValue(ccpUser.Name),
 		Admin:          types.BoolValue(ccpUser.Admin),
 		FirstName:      types.StringValue(ccpUser.FirstName),
 		LastName:       types.StringValue(ccpUser.LastName),
@@ -439,24 +436,19 @@ func (c *CleuraClient) GetCCPUser(ctx context.Context, name string) (ccpUserData
 		Type: types.StringValue(ccpUser.Privileges.Users.Type),
 		Meta: types.StringValue(ccpUser.Privileges.Users.Meta),
 	}
-	///////// THIS IS NOT A LIST!!!!!!!!!!!!!!!!!!
-	osPrivileges := ccpOpenstackPrivileges{Type: types.StringValue(ccpUser.Privileges.OpenStack.Type), Meta: types.StringValue(ccpUser.Privileges.OpenStack.Meta)}
 
-	// var openstackPrivileges []ccpProjectPrivileges
+	// Uncomment when adding support for project privileges
+	// var osProjPrivileges []ccpProjectPrivileges
 	// for _, osp := range ccpUser.Privileges.OpenStack.ProjectPrivileges {
 	// 	projectPrivileges := ccpProjectPrivileges{
-	// 		ProjectID: types.StringValue(osp.ProjectID),
-	// 		DomainID:  types.StringValue(osp.DomainID),
+	// 		ProjectId: types.StringValue(osp.ProjectId),
+	// 		DomainId:  types.StringValue(osp.DomainId),
 	// 		Type:      types.StringValue(osp.Type),
 	// 	}
-	// 	openstackPrivileges = append(openstackPrivileges, projectPrivileges)
+	// 	osProjPrivileges = append(osProjPrivileges, projectPrivileges)
 	// }
-	// openstackPrivilegesStruct := ccpOpenstackPrivileges{
-	// 	Type:              types.StringValue(ccpUser.Privileges.OpenStack.Type),
-	// 	Meta:              types.StringValue(ccpUser.Privileges.OpenStack.Meta),
-	// 	ProjectPrivileges: openstackPrivileges,
-	// }
-
+	// osPrivileges := ccpOpenstackPrivileges{Type: types.StringValue(ccpUser.Privileges.OpenStack.Type), Meta: types.StringValue(ccpUser.Privileges.OpenStack.Meta), ProjectPrivileges: osProjPrivileges}
+	osPrivileges := ccpOpenstackPrivileges{Type: types.StringValue(ccpUser.Privileges.OpenStack.Type), Meta: types.StringValue(ccpUser.Privileges.OpenStack.Meta)}
 	privileges := ccpPrivileges{
 		Users:     userPrivileges,
 		OpenStack: osPrivileges,
@@ -464,42 +456,202 @@ func (c *CleuraClient) GetCCPUser(ctx context.Context, name string) (ccpUserData
 	response.Privileges = &privileges
 	return response, nil
 }
-func (c *CleuraClient) CreateCCPUser(ctx context.Context, model openstackUserResourceModel) (openstackUserCreatedModel, error) {
-	apiPath := fmt.Sprintf("accesscontrol/v1/openstack/%s/users", model.DomainId.ValueString())
-	payload := createOpenstackUser{}
-	pw, err := password.Generate(12, 2, 0, false, true)
+
+func (c *CleuraClient) GetCCPUserResource(ctx context.Context, name string) (ccpUserResourceModel, error) {
+	apiPath := fmt.Sprintf("accesscontrol/v1/users/%s", name)
+	ccpUser := ccpUserJson{}
+	result, err := c.get(apiPath)
 	if err != nil {
-		return openstackUserCreatedModel{}, err
+		tflog.Error(ctx, fmt.Sprintf("Error occurred when executing get, error: %s", err.Error()))
+		return ccpUserResourceModel{}, err
 	}
-	payload.User = createOpenstackUserInfo{Name: model.Name.ValueString(), Password: pw, Description: model.Description.ValueString()}
-	projectList := make([]openstackUserCreateProject, 0)
-	for _, p := range model.Projects {
-		projectList = append(projectList, openstackUserCreateProject{Id: p.Id, Roles: p.Roles})
+	if result.StatusCode != 200 {
+		tflog.Error(ctx, fmt.Sprintf("return code was not 200, return code: %d when searching for user: %s", result.StatusCode, name))
+		return ccpUserResourceModel{}, fmt.Errorf("return code was not 200, return code: %d when searching for user: %s", result.StatusCode, name)
 	}
-	payload.Projects = projectList
-	// jsonPayload, err := json.Marshal(payload)
-	// if err != nil {
-	// 	return err
+	resultByteArray, err := io.ReadAll(result.Body)
+	result.Body.Close()
+	if err != nil {
+		tflog.Error(ctx, fmt.Sprintf("Failed to read result into byte array, error: %s", err.Error()), nil)
+		return ccpUserResourceModel{}, err
+	}
+	err = json.Unmarshal(resultByteArray, &ccpUser)
+	if err != nil {
+		tflog.Error(ctx, fmt.Sprintf("Failed to unmarshal byte array into CCPUser struct, error: %s", err.Error()), nil)
+		return ccpUserResourceModel{}, err
+	}
+	response := ccpUserResourceModel{
+		Id:   types.StringValue(ccpUser.Id),
+		Name: types.StringValue(ccpUser.Name),
+		// Admin:          types.BoolValue(ccpUser.Admin),
+		FirstName: types.StringValue(ccpUser.FirstName),
+		LastName:  types.StringValue(ccpUser.LastName),
+		Email:     types.StringValue(ccpUser.Email),
+		// Language:  types.StringValue(ccpUser.Language),
+		// Currency:       &ccpCurrency{Id: types.StringValue(ccpUser.Currency.Id), Code: types.StringValue(ccpUser.Currency.Code), Name: types.StringValue(ccpUser.Currency.Name)},
+		// AuthProviderId: types.StringValue(ccpUser.AuthProviderId),
+		// TwoFactorLogin: ccpUser.TwoFactorLogin,
+		// IPRestrictions: ccpUser.IPRestrictions,
+	}
+	userPrivileges := ccpUserResourceUserPrivilege{
+		Type: types.StringValue(ccpUser.Privileges.Users.Type),
+	}
+	// Uncomment when adding support for project privileges
+	// var osProjPrivileges []ccpUserResourceProjectPrivileges
+	// for _, osp := range ccpUser.Privileges.OpenStack.ProjectPrivileges {
+	// 	projectPrivileges := ccpUserResourceProjectPrivileges{
+	// 		ProjectId: types.StringValue(osp.ProjectId),
+	// 		DomainId:  types.StringValue(osp.DomainId),
+	// 		Type:      types.StringValue(osp.Type),
+	// 	}
+	// 	osProjPrivileges = append(osProjPrivileges, projectPrivileges)
 	// }
-	result, err := c.post(payload, apiPath)
-	if err != nil {
-		return openstackUserCreatedModel{}, err
+	// osPrivileges := ccpUserResourceOpenstackPrivileges{Type: types.StringValue(ccpUser.Privileges.OpenStack.Type), ProjectPrivileges: osProjPrivileges}
+	osPrivileges := ccpUserResourceOpenstackPrivileges{Type: types.StringValue(ccpUser.Privileges.OpenStack.Type)}
+	privileges := ccpResourcePrivileges{
+		Users:     userPrivileges,
+		OpenStack: osPrivileges,
 	}
-	msg, err := io.ReadAll(result.Body)
-	if err != nil {
-		return openstackUserCreatedModel{}, err
+	response.Privileges = &privileges
+	return response, nil
+}
+func (c *CleuraClient) CreateCCPUser(ctx context.Context, model ccpUserResourceModel) (ccpUserResourceModel, error) {
+	apiPath := "accesscontrol/v1/users"
+	// payload := ccpUserResourceModelJson{}
+	// pw, err := password.Generate(12, 2, 0, false, true)
+	// if err != nil {
+	// 	return ccpUserResourceModel{}, err
+	// }
+	// model.Password = types.StringValue(pw)
+	modelJson := ccpUserResourceModelJson{
+		Name:      model.Name.ValueString(),
+		Email:     model.Email.ValueString(),
+		FirstName: model.FirstName.ValueString(),
+		LastName:  model.LastName.ValueString(),
 	}
-	if result.StatusCode != 201 {
-		if err != nil {
-			return openstackUserCreatedModel{}, err
+	if model.Privileges == nil {
+		modelJson.Privileges = &ccpResourcePrivilegesJson{}
+	} else {
+		modelJson.Privileges = &ccpResourcePrivilegesJson{}
+		modelJson.Privileges.Users = ccpUserResourcePrivilegeJson{
+			Type: model.Privileges.Users.Type.ValueString(),
+			// Meta: model.Privileges.Users.Meta.ValueString(),
 		}
+		// Uncomment when adding support for project privileges
+		// var projectPrivileges []ccpUserResourceProjectPrivilegesJson
+		// if model.Privileges.OpenStack.ProjectPrivileges != nil {
+		// 	for _, p := range model.Privileges.OpenStack.ProjectPrivileges {
+		// 		projectPrivileges = append(projectPrivileges, ccpUserResourceProjectPrivilegesJson{ProjectId: p.ProjectId.ValueString(), DomainId: p.DomainId.ValueString(), Type: p.Type.ValueString()})
+		// 	}
+		// 	modelJson.Privileges.OpenStack.ProjectPrivileges = projectPrivileges
+		// }
+		modelJson.Privileges.OpenStack = ccpUserOpenstackPrivilegesJson{
+			Type: model.Privileges.OpenStack.Type.ValueString(),
+			// Meta: model.Privileges.OpenStack.Meta.ValueString(),
+		}
+	}
+
+	// var result map[string]interface{}
+	// json.Unmarshal(payload, &result)
+	// userObj, ok := result["user"].(map[string]interface{})
+	// if !ok {
+	// 	fmt.Println("User object not found")
+	// 	return ccpUserResourceModel{}, err
+	// }
+
+	// privileges, ok := userObj["privileges"].(map[string]interface{})
+	// if !ok || len(privileges) == 0 {
+	// 	fmt.Println("Privileges not found or empty")
+	// } else {
+	// 	for key := range privileges {
+	// 		delete(privileges, key)
+	// 	}
+	// 	userObj["privileges"] = privileges // Update the privileges field in the user object
+	// 	result["user"] = userObj           // Update the user object in the result map
+	// }
+
+	//"{\"user\":{\"name\":\"johan.testberg\",\"email\":\"johan.testberg@thernfrst.io\",\"firstname\":\"johan\",\"lastname\":\"testberg\",\"privileges\":{\"users\":{\"type\":\"\",\"meta\":\"\"},\"openstack\":{\"type\":\"\",\"meta\":\"\"}}}}"
+	resp, err := c.post(ccpUserCreateJson{User: modelJson}, apiPath)
+	if err != nil {
+		return ccpUserResourceModel{}, err
+	}
+	msg, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ccpUserResourceModel{}, err
+	}
+	if resp.StatusCode == 409 {
+		tflog.Error(ctx, "the specified user already exists")
+		return ccpUserResourceModel{}, fmt.Errorf("the specified user already exists")
+	}
+	if resp.StatusCode != 200 {
+		// if err != nil {
+		// 	return ccpUserResourceModel{}, err
+		// }
 		apiErr := &apiError{}
 		json.Unmarshal(msg, apiErr)
-		tflog.Error(ctx, fmt.Sprintf("%+v", result))
-		return openstackUserCreatedModel{}, errors.New("return code was not 201")
+		tflog.Error(ctx, fmt.Sprintf("%+v", apiErr))
+		return ccpUserResourceModel{}, errors.New("return code was not 200")
 	}
 	created := &openstackUserCreatedModel{}
 	json.Unmarshal(msg, created)
-	return *created, nil
+	return model, nil
 
+}
+func (c *CleuraClient) DoesCCPUserExist(user string) (bool, error) {
+	apiPath := fmt.Sprintf("accesscontrol/v1/users/%s", user)
+	result, err := c.get(apiPath)
+	if err != nil {
+		tflog.Error(context.Background(), fmt.Sprintf("Error occurred when executing get, error: %s", err.Error()))
+		return false, err
+	}
+	if result.StatusCode != 200 {
+		if result.StatusCode == 400 {
+			return false, nil
+		}
+		return false, fmt.Errorf("return code from cleura API is: %d", result.StatusCode)
+	}
+	return true, nil
+}
+func (c *CleuraClient) UpdateCCPUser(ctx context.Context, resource ccpUserUpdate) error {
+	apiPath := fmt.Sprintf("accesscontrol/v1/users/%s", resource.User.Name)
+	result, err := c.put(resource, apiPath)
+	if err != nil {
+		return err
+	}
+	if result.StatusCode != 200 {
+		defer result.Body.Close()
+		tflog.Error(ctx, fmt.Sprintf("return code when updating CCP user was not 200, code was: %d", result.StatusCode))
+		msg, err := io.ReadAll(result.Body)
+		if err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to decode response body, error: ", err.Error()))
+			return fmt.Errorf("Failed to decode response body, error: %s", err.Error())
+		}
+		apiErr := &apiError{}
+		json.Unmarshal(msg, apiErr)
+		tflog.Error(ctx, fmt.Sprintf("%+v", apiErr))
+		return fmt.Errorf("error returned from API while updating user is: %+v", apiErr)
+	}
+	return nil
+}
+func (c *CleuraClient) CheckApiError(response *http.Response) {
+
+}
+func (c *CleuraClient) DeleteCCPUser(user string) error {
+	apiPath := fmt.Sprintf("accesscontrol/v1/users/%s", user)
+	resp, err := c.delete(apiPath)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != 204 {
+		apiErr := &apiError{}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		json.Unmarshal(body, apiErr)
+		errMsg := fmt.Sprintf("failed to delete user, error: %+v", body)
+		tflog.Error(context.Background(), errMsg)
+		return errors.New(errMsg)
+	}
+	return nil
 }

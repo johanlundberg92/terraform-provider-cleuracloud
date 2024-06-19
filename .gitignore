@@ -61,4 +61,4 @@ override.tf.json
 .terraformrc
 terraform.rc
 main.tf
-cleura_api
+cleura_api/**

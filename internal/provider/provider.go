@@ -213,6 +213,7 @@ func (p *cleuraProvider) DataSources(_ context.Context) []func() datasource.Data
 func (p *cleuraProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewOpenstackUserResource,
+		NewCCPUserResource,
 	}
 }
 
