@@ -62,3 +62,4 @@ override.tf.json
 terraform.rc
 main.tf
 cleura_api/**
+.vscode/**
