@@ -41,7 +41,7 @@ func (c *cleuraUserDataSource) Metadata(_ context.Context, req datasource.Metada
 func (c *cleuraUserDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var userData openstackUserDatasourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &userData)...)
-	result, err := c.Client.GetUser(userData.Id.ValueString())
+	result, err := c.Client.GetUser(ctx, userData.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Failed to get user",

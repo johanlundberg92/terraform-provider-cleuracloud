@@ -116,7 +116,7 @@ func (c *cleuraUserResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	result, err := c.Client.CreateUser(plan)
+	result, err := c.Client.CreateUser(ctx, plan)
 	if err != nil {
 		tflog.Error(ctx, fmt.Sprintf("failed to create user, error: %s", err.Error()))
 		resp.Diagnostics.AddError("Failed to create user", fmt.Sprintf("error: %s", err.Error()))
@@ -135,7 +135,7 @@ func (c *cleuraUserResource) Read(ctx context.Context, req resource.ReadRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	exist, err := c.Client.DoesUserExist(state.Id.ValueString())
+	exist, err := c.Client.DoesUserExist(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to check if user already exists", err.Error())
 	}
@@ -145,7 +145,7 @@ func (c *cleuraUserResource) Read(ctx context.Context, req resource.ReadRequest,
 		resp.Diagnostics.AddWarning("Cleura User resource has been deleted outside terraform", "New resource will be created")
 		return
 	}
-	userResponse, err := c.Client.GetUserResource(state.Id.ValueString())
+	userResponse, err := c.Client.GetUserResource(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading user resource",
@@ -176,7 +176,7 @@ func (c *cleuraUserResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	if currentState.Enabled != plan.Enabled {
-		err := c.Client.ToggleUserEnabled(currentState.Id.ValueString(), plan.Enabled.ValueBool())
+		err := c.Client.ToggleUserEnabled(ctx, currentState.Id.ValueString(), plan.Enabled.ValueBool())
 		if err != nil {
 			resp.Diagnostics.AddError("Failed to update user", err.Error())
 			return
@@ -193,7 +193,7 @@ func (c *cleuraUserResource) Update(ctx context.Context, req resource.UpdateRequ
 				for _, r := range p.Roles {
 					if !slices.Contains(st.Roles, r) {
 						// The planned role is not in the current state, therefore we must add it
-						err := c.Client.AddUserToProjectRole(currentState.Id.ValueString(), p.Id, r)
+						err := c.Client.AddUserToProjectRole(ctx, currentState.Id.ValueString(), p.Id, r)
 						if err != nil {
 							resp.Diagnostics.AddError("Failed to add user to project role", err.Error())
 							return
@@ -204,7 +204,7 @@ func (c *cleuraUserResource) Update(ctx context.Context, req resource.UpdateRequ
 				for _, r := range st.Roles {
 					if !slices.Contains(p.Roles, r) {
 						// A role in the state has been removed from the plan, therefore we must REMOVE it
-						err := c.Client.RemoveUserFromProjectRole(currentState.Id.ValueString(), p.Id, r)
+						err := c.Client.RemoveUserFromProjectRole(ctx, currentState.Id.ValueString(), p.Id, r)
 						if err != nil {
 							resp.Diagnostics.AddError("Failed to remove user from project role", err.Error())
 							return
@@ -236,7 +236,7 @@ func (c *cleuraUserResource) Delete(ctx context.Context, req resource.DeleteRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	err := c.Client.DeleteUser(state.Id.ValueString())
+	err := c.Client.DeleteUser(ctx, state.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting Cleura user",

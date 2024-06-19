@@ -157,7 +157,7 @@ func (p *cleuraProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	client.Url = api_url
 	client.DomainId = domain_id
 	client.Client = &http.Client{}
-	err := client.Login()
+	err := client.Login(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to login to Cleura cloud",

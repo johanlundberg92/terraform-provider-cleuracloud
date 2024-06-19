@@ -237,7 +237,7 @@ func (c *ccpUserResource) Read(ctx context.Context, req resource.ReadRequest, re
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	exist, err := c.Client.DoesCCPUserExist(state.Name.ValueString())
+	exist, err := c.Client.DoesCCPUserExist(ctx, state.Name.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to check if CCP user already exists", err.Error())
 	}
@@ -297,7 +297,7 @@ func (c *ccpUserResource) Delete(ctx context.Context, req resource.DeleteRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	err := c.Client.DeleteCCPUser(state.Name.ValueString())
+	err := c.Client.DeleteCCPUser(ctx, state.Name.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting Cleura CCP user",

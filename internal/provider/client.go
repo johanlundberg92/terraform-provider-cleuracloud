@@ -34,12 +34,12 @@ type CleuraAuthResponse struct {
 	Token  string `json:"token"`
 }
 
-func (c *CleuraClient) Login() error {
-	tflog.Trace(context.Background(), "Login was called", nil)
+func (c *CleuraClient) Login(ctx context.Context) error {
+	tflog.Trace(ctx, "Login was called", nil)
 	login_marshalled, err := json.Marshal(CleuraAuth{CleuraAuthInfo{Username: c.User, Password: c.Password}})
 	if err != nil {
-		tflog.Error(context.Background(), "Marshalling of login info failed", nil)
-		tflog.Error(context.Background(), err.Error())
+		tflog.Error(ctx, "Marshalling of login info failed", nil)
+		tflog.Error(ctx, err.Error())
 		return err
 	}
 
@@ -47,46 +47,46 @@ func (c *CleuraClient) Login() error {
 	response, err := http.Post(c.Url+"/auth/v1/tokens", "application/json", buffer)
 	// req, err := http.NewRequest(http.MethodPost,c.Url, buffer)
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Failed to execute http post for login, error: %s", err.Error()), nil)
+		tflog.Error(ctx, fmt.Sprintf("Failed to execute http post for login, error: %s", err.Error()), nil)
 		return err
 	}
 	defer response.Body.Close()
 	reader, err := io.ReadAll(response.Body)
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Failed to read response body after login request, error: %s", err.Error()), nil)
+		tflog.Error(ctx, fmt.Sprintf("Failed to read response body after login request, error: %s", err.Error()), nil)
 		return err
 	}
 	authToken := CleuraAuthResponse{}
 	err = json.Unmarshal(reader, &authToken)
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Failed to unmarshal response body into CleuraAuthResponse struct, error: %s", err.Error()), nil)
+		tflog.Error(ctx, fmt.Sprintf("Failed to unmarshal response body into CleuraAuthResponse struct, error: %s", err.Error()), nil)
 		return err
 	}
 	if authToken.Result != "login_ok" {
-		tflog.Error(context.Background(), fmt.Sprintf("Response was not login_ok, response was: %s", authToken.Result), nil)
+		tflog.Error(ctx, fmt.Sprintf("Response was not login_ok, response was: %s", authToken.Result), nil)
 		return fmt.Errorf(fmt.Sprintf("Authentication result was not login_ok. Result was %s", authToken.Result))
 	}
 	c.Token = authToken.Token
 	tflog.Trace(context.Background(), "Login complete!", nil)
 	return nil
 }
-func (c *CleuraClient) GetUser(user string) (openstackUserDatasourceModel, error) {
+func (c *CleuraClient) GetUser(ctx context.Context, user string) (openstackUserDatasourceModel, error) {
 	apiPath := fmt.Sprintf("accesscontrol/v1/openstack/%s/users/%s", c.DomainId, user)
 	cleuraUser := openstackUserDatasourceModelJson{}
 	result, err := c.get(apiPath)
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Error occurred when executing get, error: %s", err.Error()))
+		tflog.Error(ctx, fmt.Sprintf("Error occurred when executing get, error: %s", err.Error()))
 		return openstackUserDatasourceModel{}, err
 	}
 	resultByteArray, err := io.ReadAll(result.Body)
 	result.Body.Close()
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Failed to read result into byte array, error: %s", err.Error()), nil)
+		tflog.Error(ctx, fmt.Sprintf("Failed to read result into byte array, error: %s", err.Error()), nil)
 		return openstackUserDatasourceModel{}, err
 	}
 	err = json.Unmarshal(resultByteArray, &cleuraUser)
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Failed to unmarshal byte array into CleuraUser struct, error: %s", err.Error()), nil)
+		tflog.Error(ctx, fmt.Sprintf("Failed to unmarshal byte array into CleuraUser struct, error: %s", err.Error()), nil)
 		return openstackUserDatasourceModel{}, err
 	}
 
@@ -116,7 +116,7 @@ func (c *CleuraClient) GetUser(user string) (openstackUserDatasourceModel, error
 	return response, nil
 
 }
-func (c *CleuraClient) DeleteUser(user string) error {
+func (c *CleuraClient) DeleteUser(ctx context.Context, user string) error {
 	apiPath := fmt.Sprintf("accesscontrol/v1/openstack/%s/users/%s", c.DomainId, user)
 	resp, err := c.delete(apiPath)
 	if err != nil {
@@ -130,28 +130,28 @@ func (c *CleuraClient) DeleteUser(user string) error {
 		}
 		json.Unmarshal(body, apiErr)
 		errMsg := fmt.Sprintf("failed to delete user, error: %+v", body)
-		tflog.Error(context.Background(), errMsg)
+		tflog.Error(ctx, errMsg)
 		return errors.New(errMsg)
 	}
 	return nil
 }
-func (c *CleuraClient) GetUserResource(user string) (openstackUserResourceModel, error) {
+func (c *CleuraClient) GetUserResource(ctx context.Context, user string) (openstackUserResourceModel, error) {
 	apiPath := fmt.Sprintf("accesscontrol/v1/openstack/%s/users/%s", c.DomainId, user)
 	cleuraUser := openstackUserDatasourceModelJson{}
 	result, err := c.get(apiPath)
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Error occurred when executing get, error: %s", err.Error()))
+		tflog.Error(ctx, fmt.Sprintf("Error occurred when executing get, error: %s", err.Error()))
 		return openstackUserResourceModel{}, err
 	}
 	resultByteArray, err := io.ReadAll(result.Body)
 	result.Body.Close()
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Failed to read result into byte array, error: %s", err.Error()), nil)
+		tflog.Error(ctx, fmt.Sprintf("Failed to read result into byte array, error: %s", err.Error()), nil)
 		return openstackUserResourceModel{}, err
 	}
 	err = json.Unmarshal(resultByteArray, &cleuraUser)
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Failed to unmarshal byte array into CleuraUser struct, error: %s", err.Error()), nil)
+		tflog.Error(ctx, fmt.Sprintf("Failed to unmarshal byte array into CleuraUser struct, error: %s", err.Error()), nil)
 		return openstackUserResourceModel{}, err
 	}
 	response := openstackUserResourceModel{
@@ -186,11 +186,11 @@ func (c *CleuraClient) GetUserResource(user string) (openstackUserResourceModel,
 	}
 	return response, nil
 }
-func (c *CleuraClient) DoesUserExist(user string) (bool, error) {
+func (c *CleuraClient) DoesUserExist(ctx context.Context, user string) (bool, error) {
 	apiPath := fmt.Sprintf("accesscontrol/v1/openstack/%s/users/%s", c.DomainId, user)
 	result, err := c.get(apiPath)
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Error occurred when executing get, error: %s", err.Error()))
+		tflog.Error(ctx, fmt.Sprintf("Error occurred when executing get, error: %s", err.Error()))
 		return false, err
 	}
 	if result.StatusCode != 200 {
@@ -201,7 +201,7 @@ func (c *CleuraClient) DoesUserExist(user string) (bool, error) {
 	}
 	return true, nil
 }
-func (c *CleuraClient) CreateUser(model openstackUserResourceModel) (openstackUserCreatedModel, error) {
+func (c *CleuraClient) CreateUser(ctx context.Context, model openstackUserResourceModel) (openstackUserCreatedModel, error) {
 	apiPath := fmt.Sprintf("accesscontrol/v1/openstack/%s/users", model.DomainId.ValueString())
 	payload := createOpenstackUser{}
 	pw, err := password.Generate(12, 2, 0, false, true)
@@ -227,12 +227,9 @@ func (c *CleuraClient) CreateUser(model openstackUserResourceModel) (openstackUs
 		return openstackUserCreatedModel{}, err
 	}
 	if result.StatusCode != 201 {
-		if err != nil {
-			return openstackUserCreatedModel{}, err
-		}
 		apiErr := &apiError{}
 		json.Unmarshal(msg, apiErr)
-		tflog.Error(context.Background(), fmt.Sprintf("%+v", result))
+		tflog.Error(ctx, fmt.Sprintf("%+v", result))
 		return openstackUserCreatedModel{}, errors.New("return code was not 200")
 	}
 	created := &openstackUserCreatedModel{}
@@ -272,10 +269,6 @@ func (c *CleuraClient) get(apiPath string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	// defer resp.Body.Close()
-	if resp.StatusCode != 200 && resp.StatusCode != 201 && resp.StatusCode != 202 {
-		return nil, errors.New("bad request when logging in to cleura api")
-	}
 	return resp, nil
 
 }
@@ -291,10 +284,6 @@ func (c *CleuraClient) delete(apiPath string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	// defer resp.Body.Close()
-	// if resp.StatusCode != 200 && resp.StatusCode != 201 && resp.StatusCode != 202 {
-	// 	return nil, errors.New("bad request when logging in to cleura api")
-	// }
 	return resp, nil
 }
 func (c *CleuraClient) put(payload interface{}, apiPath string) (*http.Response, error) {
@@ -317,7 +306,7 @@ func (c *CleuraClient) put(payload interface{}, apiPath string) (*http.Response,
 	// defer resp.Body.Close()
 	return resp, nil
 }
-func (c *CleuraClient) AddUserToProjectRole(user string, projectId string, projectRole string) error {
+func (c *CleuraClient) AddUserToProjectRole(ctx context.Context, user string, projectId string, projectRole string) error {
 	apiUrl := fmt.Sprintf("accesscontrol/v1/openstack/%s/users/%s/projects", c.DomainId, user)
 	roles := []string{projectRole}
 	ass := openstackProjectAssignment{ProjectId: projectId, Roles: roles}
@@ -327,7 +316,7 @@ func (c *CleuraClient) AddUserToProjectRole(user string, projectId string, proje
 		return err
 	}
 	if resp.StatusCode != 200 {
-		tflog.Error(context.Background(), fmt.Sprintf("status code returned is: %d", resp.StatusCode))
+		tflog.Error(ctx, fmt.Sprintf("status code returned is: %d", resp.StatusCode))
 		r, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
@@ -339,19 +328,19 @@ func (c *CleuraClient) AddUserToProjectRole(user string, projectId string, proje
 			return err
 		}
 		errStr := fmt.Sprintf("error message from api is: %+v", errMsg)
-		tflog.Error(context.Background(), errStr)
+		tflog.Error(ctx, errStr)
 		return errors.New(errStr)
 	}
 	return nil
 }
-func (c *CleuraClient) RemoveUserFromProjectRole(user string, projectId string, role string) error {
+func (c *CleuraClient) RemoveUserFromProjectRole(ctx context.Context, user string, projectId string, role string) error {
 	apiUrl := fmt.Sprintf("accesscontrol/v1/openstack/%s/users/%s/projects/%s/%s", c.DomainId, user, projectId, role)
 	resp, err := c.delete(apiUrl)
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode != 200 {
-		tflog.Error(context.Background(), fmt.Sprintf("status code returned is: %d", resp.StatusCode))
+		tflog.Error(ctx, fmt.Sprintf("status code returned is: %d", resp.StatusCode))
 		r, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
@@ -363,7 +352,7 @@ func (c *CleuraClient) RemoveUserFromProjectRole(user string, projectId string, 
 			return err
 		}
 		errStr := fmt.Sprintf("error message from api is: %+v", errMsg)
-		tflog.Error(context.Background(), errStr)
+		tflog.Error(ctx, errStr)
 		return errors.New(errStr)
 	}
 	return nil
@@ -371,7 +360,7 @@ func (c *CleuraClient) RemoveUserFromProjectRole(user string, projectId string, 
 }
 func (c *CleuraClient) AddUserToProject(projects openstackProjectUpdate) {
 }
-func (c *CleuraClient) ToggleUserEnabled(user string, enabled bool) error {
+func (c *CleuraClient) ToggleUserEnabled(ctx context.Context, user string, enabled bool) error {
 	url := fmt.Sprintf("accesscontrol/v1/openstack/%s/users/%s", c.DomainId, user)
 
 	resp, err := c.put(openstackUserUpdate{User: openstackUserUpdateProperties{Enabled: enabled}}, url)
@@ -379,7 +368,7 @@ func (c *CleuraClient) ToggleUserEnabled(user string, enabled bool) error {
 		return err
 	}
 	if resp.StatusCode != 200 {
-		tflog.Error(context.Background(), fmt.Sprintf("status code returned is: %d", resp.StatusCode))
+		tflog.Error(ctx, fmt.Sprintf("status code returned is: %d", resp.StatusCode))
 		r, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
@@ -391,7 +380,7 @@ func (c *CleuraClient) ToggleUserEnabled(user string, enabled bool) error {
 			return err
 		}
 		errStr := fmt.Sprintf("error message from api is: %+v", errMsg)
-		tflog.Error(context.Background(), errStr)
+		tflog.Error(ctx, errStr)
 		return errors.New(errStr)
 	}
 	return nil
@@ -597,11 +586,11 @@ func (c *CleuraClient) CreateCCPUser(ctx context.Context, model ccpUserResourceM
 	return model, nil
 
 }
-func (c *CleuraClient) DoesCCPUserExist(user string) (bool, error) {
+func (c *CleuraClient) DoesCCPUserExist(ctx context.Context, user string) (bool, error) {
 	apiPath := fmt.Sprintf("accesscontrol/v1/users/%s", user)
 	result, err := c.get(apiPath)
 	if err != nil {
-		tflog.Error(context.Background(), fmt.Sprintf("Error occurred when executing get, error: %s", err.Error()))
+		tflog.Error(ctx, fmt.Sprintf("Error occurred when executing get, error: %s", err.Error()))
 		return false, err
 	}
 	if result.StatusCode != 200 {
@@ -623,8 +612,8 @@ func (c *CleuraClient) UpdateCCPUser(ctx context.Context, resource ccpUserUpdate
 		tflog.Error(ctx, fmt.Sprintf("return code when updating CCP user was not 200, code was: %d", result.StatusCode))
 		msg, err := io.ReadAll(result.Body)
 		if err != nil {
-			tflog.Error(ctx, fmt.Sprintf("Failed to decode response body, error: ", err.Error()))
-			return fmt.Errorf("Failed to decode response body, error: %s", err.Error())
+			tflog.Error(ctx, fmt.Sprintf("Failed to decode response body, error: %s", err.Error()))
+			return fmt.Errorf("failed to decode response body, error: %s", err.Error())
 		}
 		apiErr := &apiError{}
 		json.Unmarshal(msg, apiErr)
@@ -636,7 +625,7 @@ func (c *CleuraClient) UpdateCCPUser(ctx context.Context, resource ccpUserUpdate
 func (c *CleuraClient) CheckApiError(response *http.Response) {
 
 }
-func (c *CleuraClient) DeleteCCPUser(user string) error {
+func (c *CleuraClient) DeleteCCPUser(ctx context.Context, user string) error {
 	apiPath := fmt.Sprintf("accesscontrol/v1/users/%s", user)
 	resp, err := c.delete(apiPath)
 	if err != nil {
@@ -650,7 +639,7 @@ func (c *CleuraClient) DeleteCCPUser(user string) error {
 		}
 		json.Unmarshal(body, apiErr)
 		errMsg := fmt.Sprintf("failed to delete user, error: %+v", body)
-		tflog.Error(context.Background(), errMsg)
+		tflog.Error(ctx, errMsg)
 		return errors.New(errMsg)
 	}
 	return nil
