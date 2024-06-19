@@ -37,4 +37,4 @@ Creates a user in Cleura Cloud
 Required:
 
 - `id` (String)
-- `roles` (List of String)
+- `roles` (Set of String)

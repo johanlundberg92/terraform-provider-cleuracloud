@@ -1,6 +1,8 @@
 package provider
 
-import "github.com/hashicorp/terraform-plugin-framework/types"
+import (
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
 
 type apiError struct {
 	Error apiErrorDetails `json:"error"`
@@ -120,3 +122,13 @@ type openstackProjectAssignment struct {
 }
 
 // --------------------  User
+
+// Privileges represents the nested privileges object within the schema.
+// type ccpUserPrivilegesResourceJson struct {
+// 	OpenStack   OpenStack   `json:"openstack,omitempty"`
+// 	Invoice     Invoice     `json:"invoice,omitempty"`
+// 	CityMonitor CityMonitor `json:"citymonitor,omitempty"`
+// 	Users       Users       `json:"users,omitempty"`
+// }
+
+// // --------------------  CCP User
