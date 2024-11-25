@@ -12,7 +12,7 @@ import (
 
 // ---------- Types
 type ccpUserDataSourceModel struct {
-	Id           types.String   `tfsdk:"id"`
+	Id           types.Int64   `tfsdk:"id"`
 	Name         types.String   `tfsdk:"name"`
 	Privileges   *ccpPrivileges `tfsdk:"privileges"`
 	Admin        types.Bool     `tfsdk:"admin"`
@@ -59,7 +59,7 @@ type ccpProjectPrivileges struct {
 
 // ------------------------- JSON
 type ccpUserJson struct {
-	Id             string            `json:"id"`
+	Id             int64            `json:"id"`
 	Name           string            `json:"name"`
 	Privileges     ccpPrivilegesJson `json:"privileges"`
 	Admin          bool              `json:"admin"`
@@ -153,7 +153,7 @@ func (c *ccpUserDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	resp.Schema = schema.Schema{
 		Description: "Fetches a CCP user in Cleura Cloud",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
+			"id": schema.NumberAttribute{
 				Computed: true,
 				Required: false,
 			},

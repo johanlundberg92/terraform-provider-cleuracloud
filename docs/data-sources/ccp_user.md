@@ -26,7 +26,7 @@ Fetches a CCP user in Cleura Cloud
 - `currency` (Object) (see [below for nested schema](#nestedatt--currency))
 - `email` (String)
 - `first_name` (String)
-- `id` (String) The ID of this resource.
+- `id` (Number) The ID of this resource.
 - `language` (String)
 - `last_name` (String)
 - `pending_email` (String)

@@ -24,7 +24,7 @@ var _ resource.ResourceWithImportState = &ccpUserResource{}
 // RESOURCE MODEL
 // ==============
 type ccpUserResourceModel struct {
-	Id        types.String `tfsdk:"id"`
+	Id        types.Int64 `tfsdk:"id"`
 	Name      types.String `tfsdk:"name" json:"name"`
 	Email     types.String `tfsdk:"email" json:"email"`
 	FirstName types.String `tfsdk:"first_name" json:"firstname"`
@@ -224,7 +224,8 @@ func (c *ccpUserResource) Create(ctx context.Context, req resource.CreateRequest
 		resp.Diagnostics.AddError("Failed to create user", fmt.Sprintf("error: %s", err.Error()))
 		return
 	}
-	plan.Id = types.StringValue(result.Id.ValueString())
+	
+	plan.Id = types.Int64Value(result.Id.ValueInt64())
 	tflog.Trace(ctx, "created user resource")
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)

@@ -409,7 +409,7 @@ func (c *CleuraClient) GetCCPUser(ctx context.Context, name string) (ccpUserData
 		return ccpUserDataSourceModel{}, err
 	}
 	response := ccpUserDataSourceModel{
-		Id:             types.StringValue(ccpUser.Id),
+		Id:             types.Int64Value(ccpUser.Id),
 		Name:           types.StringValue(ccpUser.Name),
 		Admin:          types.BoolValue(ccpUser.Admin),
 		FirstName:      types.StringValue(ccpUser.FirstName),
@@ -470,7 +470,7 @@ func (c *CleuraClient) GetCCPUserResource(ctx context.Context, name string) (ccp
 		return ccpUserResourceModel{}, err
 	}
 	response := ccpUserResourceModel{
-		Id:   types.StringValue(ccpUser.Id),
+		Id:   types.Int64Value(ccpUser.Id),
 		Name: types.StringValue(ccpUser.Name),
 		// Admin:          types.BoolValue(ccpUser.Admin),
 		FirstName: types.StringValue(ccpUser.FirstName),

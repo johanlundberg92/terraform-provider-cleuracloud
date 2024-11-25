@@ -28,7 +28,7 @@ Creates a CCP user in Cleura Cloud
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (Number) The ID of this resource.
 
 <a id="nestedatt--privileges"></a>
 ### Nested Schema for `privileges`
