@@ -153,7 +153,7 @@ func (c *ccpUserDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	resp.Schema = schema.Schema{
 		Description: "Fetches a CCP user in Cleura Cloud",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.NumberAttribute{
+			"id": schema.Int64Attribute{
 				Computed: true,
 				Required: false,
 			},
